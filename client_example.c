@@ -28,7 +28,7 @@ void *get_in_addr_client(struct sockaddr *sa)
     return &(((struct sockaddr_in6*)sa)->sin6_addr);
 }
 
-int client_main(int argc, char *argv[])
+int client_main(char * host)
 {
     int sockfd, numbytes;  
     char buf[MAXDATASIZE];
@@ -36,8 +36,8 @@ int client_main(int argc, char *argv[])
     int rv;
     char s[INET6_ADDRSTRLEN];
 
-    if (argc != 2) {
-        fprintf(stderr,"usage: client hostname\n");
+    if (strlen(host) < 1) {
+        fprintf(stderr,"Error! usage: client hostname\n");
         exit(1);
     }
 
@@ -45,7 +45,7 @@ int client_main(int argc, char *argv[])
     hints.ai_family = AF_UNSPEC;
     hints.ai_socktype = SOCK_STREAM;
 
-    if ((rv = getaddrinfo(argv[1], PORT, &hints, &servinfo)) != 0) {
+    if ((rv = getaddrinfo(host, PORT, &hints, &servinfo)) != 0) {
         fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
         return 1;
     }

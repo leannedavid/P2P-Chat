@@ -1,4 +1,4 @@
 
-void sigchld_handler(int s);
-void *get_in_addr_server(struct sockaddr *sa);
-int server_main();
+void sigchld_handler(int);
+void *get_in_addr_server(struct sockaddr *);
+int server_main(char*);

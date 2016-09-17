@@ -11,6 +11,7 @@
 #include <sys/types.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
+#include <iostream>
 
 #include <arpa/inet.h>
 
@@ -28,26 +29,35 @@ void *get_in_addr_client(struct sockaddr *sa)
     return &(((struct sockaddr_in6*)sa)->sin6_addr);
 }
 
-int client_main(char * host)
+int client_main(char * host, char * port, char * message)
 {
     int sockfd, numbytes;  
     char buf[MAXDATASIZE];
     struct addrinfo hints, *servinfo, *p;
     int rv;
     char s[INET6_ADDRSTRLEN];
+    //std::cout << "in client_main with message " << message << " and port " << port << "\n";
 
     if (strlen(host) < 1) {
         fprintf(stderr,"Error! usage: client hostname\n");
         exit(1);
+    } else {
+        //std::cout <<"host name good, you sent " << host << "\n";
     }
 
-    memset(&hints, 0, sizeof hints);
+    if(memset(&hints, 0, sizeof hints) > 0){
+        //std::cout << "memset returnes a positive value\n";
+    } else {
+        //std::cout << "memset returnes a negative value\n";
+    }
     hints.ai_family = AF_UNSPEC;
     hints.ai_socktype = SOCK_STREAM;
 
-    if ((rv = getaddrinfo(host, PORT, &hints, &servinfo)) != 0) {
+    if ((rv = getaddrinfo(host, port, &hints, &servinfo)) != 0) {
         fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
         return 1;
+    } else {
+        //std::cout << "getaddrinfo() good!\n";
     }
 
     // loop through all the results and connect to the first we can
@@ -56,12 +66,16 @@ int client_main(char * host)
                 p->ai_protocol)) == -1) {
             perror("client: socket");
             continue;
+        } else {
+            //std::cout << "socket() good!\n";
         }
 
         if (connect(sockfd, p->ai_addr, p->ai_addrlen) == -1) {
             close(sockfd);
             perror("client: connect");
             continue;
+        } else {
+            //std::cout << "connect() good!\n";
         }
 
         break;
@@ -70,22 +84,20 @@ int client_main(char * host)
     if (p == NULL) {
         fprintf(stderr, "client: failed to connect\n");
         return 2;
+    } else {
+        //std::cout << "client connected! p is not null...\n";
     }
 
     inet_ntop(p->ai_family, get_in_addr_client((struct sockaddr *)p->ai_addr),
             s, sizeof s);
-    printf("client: connecting to %s\n", s);
+    //printf("client: connecting to %s\n", s);
 
     freeaddrinfo(servinfo); // all done with this structure
 
-    if ((numbytes = recv(sockfd, buf, MAXDATASIZE-1, 0)) == -1) {
-        perror("recv");
-        exit(1);
-    }
 
-    buf[numbytes] = '\0';
+    if (send(sockfd, message, strlen(message), 0) == -1)
+        perror("send");
 
-    printf("client: received '%s'\n",buf);
 
     close(sockfd);
 

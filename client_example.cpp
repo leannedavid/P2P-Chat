@@ -15,7 +15,6 @@
 
 #include <arpa/inet.h>
 
-#define PORT "3490" // the port client will be connecting to 
 
 #define MAXDATASIZE 100 // max number of bytes we can get at once 
 
@@ -31,8 +30,7 @@ void *get_in_addr_client(struct sockaddr *sa)
 
 int client_main(char * host, char * port, char * message)
 {
-    int sockfd, numbytes;  
-    char buf[MAXDATASIZE];
+    int sockfd;  
     struct addrinfo hints, *servinfo, *p;
     int rv;
     char s[INET6_ADDRSTRLEN];
@@ -88,8 +86,8 @@ int client_main(char * host, char * port, char * message)
         //std::cout << "client connected! p is not null...\n";
     }
 
-    inet_ntop(p->ai_family, get_in_addr_client((struct sockaddr *)p->ai_addr),
-            s, sizeof s);
+    /*inet_ntop(p->ai_family, get_in_addr_client((struct sockaddr *)p->ai_addr),
+            s, sizeof s);*/
     //printf("client: connecting to %s\n", s);
 
     freeaddrinfo(servinfo); // all done with this structure

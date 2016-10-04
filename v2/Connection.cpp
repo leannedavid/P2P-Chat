@@ -22,7 +22,8 @@ using namespace std;
 
 
 Connection::Connection(string hostString, string portString)
-{	this->host = hostString.c_str();
+{	
+    this->host = hostString.c_str();
 	this->port = portString.c_str();
     cout << "\ncreating connection with host " << this->host <<" and port" << this->port;
     this->initialize();
@@ -59,7 +60,7 @@ void Connection::initialize()
 
 
 }
-void     Connection::disconnect()
+void Connection::disconnect()
 {
     close(this->senderSocketFileDescriptor);
     close(this->listenerSocketFileDescriptor);
@@ -209,7 +210,7 @@ void Connection::connectListenerSocket()
     // loop through all the results and bind to the first we can
     for(p = servinfo; p != NULL; p = p->ai_next) {
 
-        std::cout << "\n*****\nlooking at p->ai_canonname " << p->ai_canonname << "\n*****\n";
+        //std::cout << "\n*****\nlooking at p->ai_canonname " << p->ai_canonname << "\n*****\n";
 
 
         if ((this->listenerSocketFileDescriptor = socket(p->ai_family, p->ai_socktype,
@@ -217,11 +218,21 @@ void Connection::connectListenerSocket()
             perror("server: socket");
             continue;
         }
+        else 
+        {
+            std::cout << "\n*****\nSocket ctor successful\n*****\n";
+
+        }
 
         if (setsockopt(this->listenerSocketFileDescriptor, SOL_SOCKET, SO_REUSEADDR, &yes,
                 sizeof(int)) == -1) {
             perror("setsockopt");
             exit(1);
+        }
+        else
+        {
+            std::cout << "\n*****\nSocket setsockopt successful\n*****\n";
+
         }
 
         if (bind(this->listenerSocketFileDescriptor, p->ai_addr, p->ai_addrlen) == -1) {
@@ -229,9 +240,15 @@ void Connection::connectListenerSocket()
             perror("server: bind");
             continue;
         }
+        else
+        {
+
+            std::cout << "\n*****\nSocket bind successful\n*****\n";
+        }
 
         break;
     }
+    std::cout << "\n*****\nSocket successful\n*****\n";
 
     freeaddrinfo(servinfo); // all done with this structure
 

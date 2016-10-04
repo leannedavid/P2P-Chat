@@ -9,13 +9,13 @@ class Connection
 private:
 	int senderSocketFileDescriptor;
 	int listenerSocketFileDescriptor;
-	const char * host;
-	const char * port;
 	void connectSenderSocket();
 	void connectListenerSocket();
 	void * get_in_addr(struct sockaddr *);
 public:
 	Connection(string,string);
+	const char * host;
+	const char * port;
 	void initialize();
 	void disconnect();
 	void sendMessage(string);

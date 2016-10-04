@@ -55,9 +55,10 @@ void *get_in_addr_server(struct sockaddr *sa)
 
 int server_main(char * port)
 {
+	//char * port = (char*)portVd;W
 	string ok;
-	cout << "\nin server_main(). OK?";
-	cin >> ok;
+	/*cout << "\nin server_main(). OK?";
+	cin >> ok;*/
     int sockfd, new_fd;  // listen on sock_fd, new connection on new_fd
     struct addrinfo hints, *servinfo, *p;
     struct sockaddr_storage peer_addr; // connector's address information
@@ -77,14 +78,14 @@ int server_main(char * port)
         return 1;
     }
 	cout << "\ndone with getaddrinfo(). OK?";
-	cin >> ok;
-int index = 0;
+	//cin >> ok;
+	int index = 0;
     // loop through all the results and bind to the first we can
     for(p = servinfo; p != NULL; p = p->ai_next) {
 
-		cout << "\ntraversing element" << index << ". OK?";
+		/*cout << "\ntraversing element" << index << ". OK?";
 		cin >> ok;
-		index++;
+		index++;*/
 
         //std::cout << "\n*****\nlooking at p->ai_canonname " << p->ai_canonname << "\n*****\n";
 
@@ -134,7 +135,7 @@ int index = 0;
         exit(1);
     }
 
-    printf("\n** server: waiting for connections **\n");
+    //printf("\n** server: waiting for connections **\n");
 
     while(1) {  // main accept() loop
         sin_size = sizeof peer_addr;
@@ -235,11 +236,7 @@ int main(int argc, char ** argv)
 
 
 	vector<Connection*> * myPeers = new vector<Connection*>();
-
-
-    std::cout << "\nHi, type \"help\" for assistance:\n\t1) SERVER - Listening on " << argv[1];
-              //<< "\n\tsend <message>: CLIENT - Send on " << argv[2] << "\n\n>> ";
-    
+ 
     char input[100];
     std::string choice;
     //std::cin >> choice;
@@ -248,7 +245,6 @@ int main(int argc, char ** argv)
     string hostToConnect, portToConnect;
 
     char * myPort = argv[1];
-
 
     pthread_t listener_thread;
     int listener_thread_error =
@@ -263,20 +259,59 @@ int main(int argc, char ** argv)
 
     do{
         
-        if(choice == "1"){
+        /*if(choice == "1"){
             server_main(argv[1]);
             
             std::cout << ">> ";
             std::cin >> choice;
         }
 
-        else if(choice == "help" || choice == "HELP"){
+        else */
+        if(choice == "help" || choice == "HELP"){
             display_help();
         }
         
         else if (choice == "myip" || choice == "MYIP"){
-        	struct hostent * myHostent = gethostbyname("localhost");
-            std::cout << "\nThe IP address is: " << (*(myHostent->h_addr_list))[0] << "\n\n";
+
+
+			//char * port = (char*)portVd;W
+			string ok;
+			/*cout << "\nin server_main(). OK?";
+			cin >> ok;*/
+		    int sockfd, new_fd;  // listen on sock_fd, new connection on new_fd
+		    struct addrinfo hints, *servinfo, *p;
+		    struct sockaddr_storage peer_addr; // connector's address information
+		    socklen_t sin_size;
+		    struct sigaction sa;
+		    int yes=1;
+		    char s[INET6_ADDRSTRLEN];
+		    int rv;
+
+		    memset(&hints, 0, sizeof hints);
+		    hints.ai_family = AF_UNSPEC;
+		    hints.ai_socktype = SOCK_STREAM;
+		    hints.ai_flags = AI_PASSIVE; // use my IP
+
+		    char * cur;
+
+		    if ((rv = getaddrinfo(NULL, myPort, &hints, &servinfo)) != 0) {
+		        fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
+		        return 1;
+		    }
+		    else 
+		    {
+
+			    inet_ntop(servinfo->ai_addr->sa_family,
+	            get_in_addr_server((struct sockaddr *)&(*(servinfo->ai_addr))),
+	            cur, sizeof cur);
+
+		    }
+
+		    freeaddrinfo(servinfo);
+
+
+
+            std::cout << "\nThe IP address is: " << cur << "\n\n";
         }
         
         else if (choice == "myport" || choice == "MYPORT"){
@@ -362,6 +397,12 @@ int main(int argc, char ** argv)
         }
         
     } while (choice != "exit");
+
+
+    std::cout << "\nHi, type \"help\" for assistance:\n\t1) SERVER - Listening on " << argv[1];
+              //<< "\n\tsend <message>: CLIENT - Send on " << argv[2] << "\n\n>> ";
+   
+
 
 
     

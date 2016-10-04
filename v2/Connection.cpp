@@ -54,7 +54,7 @@ void Connection::initialize()
 {
 
 
-    this->connectListenerSocket();
+    //this->connectListenerSocket();
     this->connectSenderSocket();
 
 
@@ -171,12 +171,12 @@ void Connection::connectSenderSocket()
         fprintf(stderr, "client: failed to connect\n");
         return;
     } else {
-        //std::cout << "client connected! p is not null...\n";
+        std::cout << "client connected! p is not null...\n";
     }
 
-    /*inet_ntop(p->ai_family, get_in_addr_client((struct sockaddr *)p->ai_addr),
-            s, sizeof s);*/
-    //printf("client: connecting to %s\n", s);
+   /* inet_ntop(p->ai_family, get_in_addr_client((struct sockaddr *)p->ai_addr),
+            s, sizeof s);
+    printf("client: connecting to %s\n", s);*/
 
     freeaddrinfo(servinfo); // all done with this structure
 

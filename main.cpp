@@ -10,18 +10,25 @@
 
 #define NUM_THREADS     5
 
+struct Peer 
+{
+    char * ip;
+    char * port;
+};
+
 void *listen_routine(void *port){
     std::cout << "\n In listen_routine\nGoing to listen on " << (char*)port;
     server_main((char*)port);
     pthread_exit(NULL);
 }
 
-void *send_routine(void *port){
+void *send_routine(void *peer){
     char input[100];
+    struct Peer * myPeer = (struct Peer *)peer;
     std::cout << "\n\nEnter a message!!!!!: ";
     //std::cin.ignore();
     std::cin.getline(input, sizeof(input));
-    client_main("localhost", (char *)port, input);
+    client_main(myPeer->ip, myPeer->port, input);
     std::cout << "\n\nMessage sent????: " << "\"" << input << "\"";
     
     
@@ -132,12 +139,13 @@ int main (int argc, char *argv[]){
 
     */
 
+
     
     pthread_t listener_thread;
     pthread_t sender_thread;
     
     std::cout << "\nGoing to listen on " << argv[1]
-    << " and broadcast on "    << argv[2]
+    << " and broadcast on "    << argv[2] << ":" << argv[3]
     << ",\n\targ[0] was \""      << argv[0] << "\"\n";
     
     int listener_thread_error =
@@ -148,8 +156,13 @@ int main (int argc, char *argv[]){
         std::cout << "\nError creating listener: code " << listener_thread_error;
     }
     
+    struct Peer myPeer;
+    myPeer.ip = argv[2];
+    myPeer.port = argv[3];
+
     int sender_thread_error =
-    pthread_create(&sender_thread, NULL, send_routine, (void *)argv[2]);
+    pthread_create(&sender_thread, NULL, send_routine, (void *)&myPeer);
+    //pthread_create(&sender_thread, NULL, send_routine, (void *)argv[2]);
     
     
     if(sender_thread_error){

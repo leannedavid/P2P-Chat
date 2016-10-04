@@ -55,6 +55,9 @@ void *get_in_addr_server(struct sockaddr *sa)
 
 int server_main(char * port)
 {
+	string ok;
+	cout << "\nin server_main(). OK?";
+	cin >> ok;
     int sockfd, new_fd;  // listen on sock_fd, new connection on new_fd
     struct addrinfo hints, *servinfo, *p;
     struct sockaddr_storage peer_addr; // connector's address information
@@ -73,21 +76,27 @@ int server_main(char * port)
         fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
         return 1;
     }
-
-
-    std::cout << "\nrv is " << rv;
-
-
+	cout << "\ndone with getaddrinfo(). OK?";
+	cin >> ok;
+int index = 0;
     // loop through all the results and bind to the first we can
     for(p = servinfo; p != NULL; p = p->ai_next) {
 
-        std::cout << "\n*****\nlooking at p->ai_canonname " << p->ai_canonname << "\n*****\n";
+		cout << "\ntraversing element" << index << ". OK?";
+		cin >> ok;
+		index++;
+
+        //std::cout << "\n*****\nlooking at p->ai_canonname " << p->ai_canonname << "\n*****\n";
 
 
         if ((sockfd = socket(p->ai_family, p->ai_socktype,
                 p->ai_protocol)) == -1) {
             perror("server: socket");
             continue;
+        }
+        else 
+        {
+
         }
 
         if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &yes,

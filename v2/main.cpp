@@ -18,19 +18,32 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <sys/wait.h>
+
+#include <map>
 #include <signal.h>
 
 
 #include "Connection.h"
 
+#include <sstream>
+
+
+
 
 using namespace std;
 
-#define NUM_THREADS     5
+
+
+
+
+
 
 
 
 #define BACKLOG 10     // how many pending connections queue will hold
+
+map<string, int> * hostNameToId;
+vector<Connection*> * myPeers;
 
 void sigchld_handler_main(int s)
 {
@@ -46,11 +59,17 @@ void sigchld_handler_main(int s)
 // get sockaddr, IPv4 or IPv6:
 void *get_in_addr_server(struct sockaddr *sa)
 {
+	return &(((struct sockaddr_in*)sa)->sin_addr);
     if (sa->sa_family == AF_INET) {
         return &(((struct sockaddr_in*)sa)->sin_addr);
     }
 
     return &(((struct sockaddr_in6*)sa)->sin6_addr);
+}
+
+short unsigned int * get_in_port_server(struct sockaddr *sa)
+{
+    return &(((struct sockaddr_in*)sa)->sin_port);
 }
 
 int server_main(char * port)
@@ -66,6 +85,7 @@ int server_main(char * port)
     struct sigaction sa;
     int yes=1;
     char s[INET6_ADDRSTRLEN];
+    char portTemp[INET6_ADDRSTRLEN];
     int rv;
 
     memset(&hints, 0, sizeof hints);
@@ -77,7 +97,7 @@ int server_main(char * port)
         fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
         return 1;
     }
-	cout << "\ndone with getaddrinfo(). OK?";
+	//cout << "\ndone with getaddrinfo(). OK?";
 	//cin >> ok;
 	int index = 0;
     // loop through all the results and bind to the first we can
@@ -87,7 +107,7 @@ int server_main(char * port)
 		cin >> ok;
 		index++;*/
 
-        //std::cout << "\n*****\nlooking at p->ai_canonname " << p->ai_canonname << "\n*****\n";
+        //cout << "\n*****\nlooking at p->ai_canonname " << p->ai_canonname << "\n*****\n";
 
 
         if ((sockfd = socket(p->ai_family, p->ai_socktype,
@@ -154,12 +174,50 @@ int server_main(char * port)
 
         buf[numbytes] = '\0';
 
-        printf("server received message: '%s'\n",buf);
-
         inet_ntop(peer_addr.ss_family,
             get_in_addr_server((struct sockaddr *)&peer_addr),
             s, sizeof s);
-        printf("server: got connection from %s\n", s);
+
+
+        
+
+        if(buf[0] == '~')
+        {
+        	int indToDelete = (*hostNameToId)[s];
+            (*myPeers)[indToDelete] = NULL;
+
+        }
+        else if(buf[0] == '+'){
+        	cout << "\ngot a connect msg from " << s << " : " << portTemp;
+        	string portTemp = "";
+        	for(int j = 1; j < sizeof(buf)/sizeof(buf[0]); j++)
+        	{
+        		portTemp += buf[j];
+        	}
+
+	        if(hostNameToId->find(s) == hostNameToId->end())
+	        {
+	        	cout << "\n\nConnecting with " << s  << " : " << portTemp;
+
+
+
+	            Connection * conn = new Connection(s, portTemp);
+
+	            myPeers->push_back(conn);
+	            int lastIndex = myPeers->size() -1;
+	            (*hostNameToId)[s] = lastIndex;
+	        }
+
+        }
+        else
+        {
+
+	        printf("server received message: '%s'\n",buf);
+	        printf("server: got connection from %s\n", s);
+
+        }
+
+
 
         /*if (!fork()) { // this is the child process
             close(sockfd); // child doesn't need the listener
@@ -181,8 +239,10 @@ struct Peer
     char * port;
 };
 
+
+
 void *listen_routine(void *port){
-    std::cout << "\n In listen_routine\nGoing to listen on " << (char*)port;
+    cout << "\n In listen_routine\nGoing to listen on " << (char*)port;
     server_main((char*)port);
     pthread_exit(NULL);
 }
@@ -190,11 +250,11 @@ void *listen_routine(void *port){
 /*void *send_routine(void *peer){
     char input[100];
     struct Peer * myPeer = (struct Peer *)peer;
-    std::cout << "\n\nEnter a message!!!!!: ";
-    //std::cin.ignore();
-    std::cin.getline(input, sizeof(input));
+    cout << "\n\nEnter a message!!!!!: ";
+    //cin.ignore();
+    cin.getline(input, sizeof(input));
     client_main(myPeer->ip, myPeer->port, input);
-    std::cout << "\n\nMessage sent????: " << "\"" << input << "\"";
+    cout << "\n\nMessage sent????: " << "\"" << input << "\"";
     
     
     pthread_exit(NULL);
@@ -203,7 +263,7 @@ void *listen_routine(void *port){
 
 
 void display_help(){
-    std::cout << "\n**************************** HELP MENU ****************************\n"
+    cout << "\n**************************** HELP MENU ****************************\n"
     << " :: What would you like to do?\n\n"
     << "- myip:   Display my IP address\n"
     << "- myport: Display port on which this process is listening for\n"
@@ -233,13 +293,13 @@ int main(int argc, char ** argv)
 	cout << "\nDeleted peer...";*/
 
 
+	hostNameToId = new map<string, int>();
 
-
-	vector<Connection*> * myPeers = new vector<Connection*>();
+	myPeers = new vector<Connection*>();
  
     char input[100];
-    std::string choice;
-    //std::cin >> choice;
+    string choice;
+    //cin >> choice;
     bool exit = true;
     
     string hostToConnect, portToConnect;
@@ -252,7 +312,7 @@ int main(int argc, char ** argv)
     
     
     if(listener_thread_error){
-        std::cout << "\nError creating listener: code " << listener_thread_error;
+        cout << "\nError creating listener: code " << listener_thread_error;
     }
 
 
@@ -262,8 +322,8 @@ int main(int argc, char ** argv)
         /*if(choice == "1"){
             server_main(argv[1]);
             
-            std::cout << ">> ";
-            std::cin >> choice;
+            cout << ">> ";
+            cin >> choice;
         }
 
         else */
@@ -303,7 +363,8 @@ int main(int argc, char ** argv)
 
 			    inet_ntop(servinfo->ai_addr->sa_family,
 	            get_in_addr_server((struct sockaddr *)&(*(servinfo->ai_addr))),
-	            cur, sizeof cur);
+	            s, sizeof s);
+            	cout << "\nThe IP address is: " << s << "\n\n";
 
 		    }
 
@@ -311,34 +372,35 @@ int main(int argc, char ** argv)
 
 
 
-            std::cout << "\nThe IP address is: " << cur << "\n\n";
         }
         
         else if (choice == "myport" || choice == "MYPORT"){
-            std::cout << "\nThe port no. is: " << argv[1] << "\n\n";
+            cout << "\nThe port no. is: " << argv[1] << "\n\n";
         }
         
         
         else if (choice == "connect" || choice == "CONNECT"){
-            std::cin.ignore();
-            //std::cin.getline(input, sizeof(input));
+            cin.ignore();
+            //cin.getline(input, sizeof(input));
             cin >> hostToConnect >> portToConnect;
             
-            std::cout << "\n\nConnecting with " << hostToConnect << ":"<< portToConnect << " ......\n\n";
+            cout << "\n\nConnecting with " << hostToConnect << ":"<< portToConnect << " ......\n\n";
 
 
 
             Connection * conn = new Connection(hostToConnect, portToConnect);
             myPeers->push_back(conn);
+            int lastIndex = myPeers->size() -1;
+            (*hostNameToId)[hostToConnect] = lastIndex;
         }
         
         else if (choice == "list" || choice == "LIST"){
-            std::cout << "\n\nLISTING CONNECTIONS:\n\n";
+            cout << "\n\nLISTING CONNECTIONS:\n\n";
             string out = "";
             for(int i = 0; i < myPeers->size(); i++)
             {
-
-            	cout << i << ") " << " " << (*myPeers)[i]->host << ":" << (*myPeers)[i]->port << "\n";
+            	if((*myPeers)[i] != NULL)
+            		cout << i << ") " << " " << (*myPeers)[i]->host << ":" << (*myPeers)[i]->port << "\n";
 
 	
             }
@@ -346,31 +408,42 @@ int main(int argc, char ** argv)
         }
 
         else if (choice == "terminate" || choice == "TERMINATE"){
-            std::cin.ignore();
-            //std::cin.getline(input, sizeof(input));
+            cin.ignore();
+            //cin.getline(input, sizeof(input));
             int ind;
             cin >> ind;
 
-            
-            std::cout << "\n\nTerminating with " << ind << " ......\n\n";
+            if(ind < myPeers->size())
+            {
 
-            Connection * connToDelete = (*myPeers)[ind];
-            myPeers->erase(myPeers->begin() + ind);
-            delete connToDelete;
+	            cout << "\n\nTerminating with " << ind << " ......\n\n";
+
+	            Connection * connToDelete = (*myPeers)[ind];
+
+	            connToDelete->sendMessage("~");
+
+	            connToDelete->disconnect();
+	            (*myPeers)[ind] = NULL;
+	            delete connToDelete;	
+            }
+            else
+            {
+            	cout << "\nIndex " << ind << " is not in range!";
+            }
 
         }
 
         
         else if (choice == "send") {
-            std::cin.ignore();
-            //std::cout << "\n\nEnter a message: ";
+            cin.ignore();
+            //cout << "\n\nEnter a message: ";
 
             int idToSend;
             cin >> idToSend;
-            std::cin.getline(input, sizeof(input));
+            cin.getline(input, sizeof(input));
             //client_main("localhost", argv[2], input);
             Connection * connToSend = (*myPeers)[idToSend];
-            std::cout << "Message that will be sent: " << "\"" << input << "\"\n\n";
+            cout << "Message that will be sent: " << "\"" << input << "\"\n\n";
             connToSend->sendMessage(input);
 
         }
@@ -381,6 +454,8 @@ int main(int argc, char ** argv)
             {
 
 	            Connection * connToDelete = (*myPeers)[i];
+	            connToDelete->sendMessage("===");
+            	connToDelete->disconnect();	
 	            myPeers->erase(myPeers->begin() + i);
 	            delete connToDelete;
 
@@ -390,30 +465,30 @@ int main(int argc, char ** argv)
         }
         
         
-        std::cout << ">> ";
-        std::cin >> choice;
+        cout << ">> ";
+        cin >> choice;
         if (choice != "send" || choice != "connect" || choice != "terminate"){
-           // std::cout << "CHOICE: " << choice;
+           // cout << "CHOICE: " << choice;
         }
         
     } while (choice != "exit");
 
 
-    std::cout << "\nHi, type \"help\" for assistance:\n\t1) SERVER - Listening on " << argv[1];
+    cout << "\nHi, type \"help\" for assistance:\n\t1) SERVER - Listening on " << argv[1];
               //<< "\n\tsend <message>: CLIENT - Send on " << argv[2] << "\n\n>> ";
    
 
 
 
     
-    std::cout << "\n+--------------------------------------------------+\n"
+    cout << "\n+--------------------------------------------------+\n"
                 << "|                 SIGNING OUT....                  |\n"
                 << "+--------------------------------------------------+\n";
 
-
+     delete hostNameToId;
+     delete myPeers;
     pthread_exit(NULL);
 
-    
 
 
 

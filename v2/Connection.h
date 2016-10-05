@@ -14,6 +14,7 @@ private:
 	void * get_in_addr(struct sockaddr *);
 public:
 	Connection(string,string);
+	string portString;
 	const char * host;
 	const char * port;
 	void initialize();

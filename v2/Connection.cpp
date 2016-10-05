@@ -23,6 +23,7 @@ using namespace std;
 
 Connection::Connection(string hostString, string portString)
 {	
+    this->portString = portString;
     this->host = hostString.c_str();
 	this->port = portString.c_str();
     cout << "\ncreating connection with host " << this->host <<" and port" << this->port;
@@ -56,6 +57,11 @@ void Connection::initialize()
 
     //this->connectListenerSocket();
     this->connectSenderSocket();
+    string myPort = "";
+    myPort += "+";
+    myPort += this->portString;
+    cout << "\nin Connection::initialize(): sending " << myPort;
+    this->sendMessage(myPort);
 
 
 
@@ -143,7 +149,7 @@ void Connection::connectSenderSocket()
         fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
         return;
     } else {
-        //std::cout << "getaddrinfo() good!\n";
+        std::cout << "getaddrinfo() good!\n";
     }
 
     // loop through all the results and connect to the first we can
@@ -153,7 +159,7 @@ void Connection::connectSenderSocket()
             perror("client: socket");
             continue;
         } else {
-            //std::cout << "socket() good!\n";
+            std::cout << "socket() good!\n";
         }
 
         if (connect(this->senderSocketFileDescriptor, p->ai_addr, p->ai_addrlen) == -1) {
@@ -161,7 +167,7 @@ void Connection::connectSenderSocket()
             perror("client: connect");
             continue;
         } else {
-            //std::cout << "connect() good!\n";
+            std::cout << "connect() good!\n";
         }
 
         break;
